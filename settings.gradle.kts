@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GURU2-B10"
+rootProject.name = "swuniMAP"
 include(":app")
  

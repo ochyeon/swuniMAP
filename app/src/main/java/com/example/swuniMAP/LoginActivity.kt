@@ -1,4 +1,4 @@
-package com.example.guru2_b10
+package com.example.swuniMAP
 
 import android.content.Intent
 import android.os.Bundle

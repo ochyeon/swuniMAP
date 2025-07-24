@@ -2,4 +2,9 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- 사용할 메인 색상 추가-->
+    <color name = "swu_red">#9e1a20</color>
+    <color name = "swu_blue">#101077</color>
+    <color name = "swu_yellow">#ffb300</color>
 </resources>

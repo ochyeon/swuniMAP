@@ -5,35 +5,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <EditText
-        android:id="@+id/idEditText"
+    <Button
+        android:id="@+id/signupButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="230dp"
-        android:hint="학번 입력"
-        android:text="TextView"
+        android:layout_marginTop="23dp"
+        android:layout_marginEnd="100dp"
+        android:background="@drawable/round_button"
+        android:backgroundTint="@color/swu_blue"
+        android:text="회원가입"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-    <EditText
-        android:id="@+id/pwEditText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:text="TextView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.501"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/idEditText" />
-
-    <Spinner
-        android:id="@+id/collegeSpinner"
-        android:layout_width="100dp"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pwEditText" />
 
     <Button
@@ -41,29 +22,40 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="100dp"
-        android:layout_marginTop="25dp"
+        android:layout_marginTop="23dp"
         android:background="@drawable/round_button"
+        android:backgroundTint="@color/swu_blue"
         android:text="로그인"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/collegeSpinner" />
+        app:layout_constraintTop_toBottomOf="@+id/pwEditText" />
 
-    <Button
-        android:id="@+id/signupButton"
+    <EditText
+        android:id="@+id/idEditText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="25dp"
-        android:layout_marginEnd="100dp"
-        android:background="@drawable/round_button"
-        android:text="회원가입"
+        android:layout_marginTop="184dp"
+        android:hint="학번 입력"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/collegeSpinner" />
+        app:layout_constraintHorizontal_bias="0.501"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/pwEditText"
+        android:layout_width="76dp"
+        android:layout_height="44dp"
+        android:layout_marginTop="15dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.501"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/idEditText" />
 
     <TextView
         android:id="@+id/ID"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="248dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginTop="200dp"
+        android:layout_marginEnd="16dp"
         android:text="ID :"
         app:layout_constraintEnd_toStartOf="@+id/idEditText"
         app:layout_constraintTop_toTopOf="parent" />
@@ -72,9 +64,10 @@
         android:id="@+id/PW"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="41dp"
-        android:layout_marginEnd="20dp"
+        android:layout_marginTop="35dp"
+        android:layout_marginEnd="16dp"
         android:text="PW :"
         app:layout_constraintEnd_toStartOf="@id/pwEditText"
         app:layout_constraintTop_toBottomOf="@+id/ID" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>
