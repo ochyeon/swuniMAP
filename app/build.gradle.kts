@@ -1,7 +1,17 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
+
+val properties = Properties().apply{
+    load(FileInputStream(rootProject.file("local.properties")))
+}
+val kakaoMapKey = properties.getProperty("KAKAO_MAP_KEY")
+    ?: throw GradleException("KAKAO_MAP_KEY is missing in local.properties")
+
 
 android {
     namespace = "com.example.swuniMAP"
@@ -15,6 +25,12 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
+    }
+
+    buildFeatures{
+        buildConfig = true
     }
 
     buildTypes {
@@ -27,11 +43,11 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
 }
 
@@ -46,4 +62,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+    implementation(libs.kakao.mapsdk)
 }

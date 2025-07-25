@@ -12,8 +12,7 @@ class UserDBHelper(context: Context) :
         val createTable = """
             CREATE TABLE users(
             id TEXT PRIMARY KEY,
-            pw TEXT,
-            college TEXT
+            pw TEXT
             )""".trimIndent()
         db.execSQL(createTable)
     }
@@ -24,7 +23,7 @@ class UserDBHelper(context: Context) :
         onCreate(db)
     }
 
-    fun registerUser(id:String, pw:String, college:String):Boolean{
+    fun registerUser(id:String, pw:String):Boolean{
         val db = writableDatabase
 
         // 중복 체크
@@ -39,7 +38,6 @@ class UserDBHelper(context: Context) :
         val values = ContentValues().apply{
             put("id", id)
             put("pw", pw)
-            put("college", college)
         }
 
         return try{
@@ -50,30 +48,30 @@ class UserDBHelper(context: Context) :
         }
     }
 
-    fun loginUser(id:String, pw:String, college:String):Boolean{
+    fun loginUser(id:String, pw:String):Boolean{
         val db = readableDatabase
         val cursor = db.rawQuery(
-            "SELECT * FROM users WHERE id = ? AND pw = ? AND college = ?",
-            arrayOf(id, pw, college)
+            "SELECT * FROM users WHERE id = ? AND pw = ?",
+            arrayOf(id, pw)
         )
         val loginSuccess = cursor.count > 0
         cursor.close()
         return loginSuccess
     }
 
-    // 로그인 한 user의 id 기반으로 단과대 정보 가져오기 -> 추후 필요할 수도 있을 듯 해서 구현해둠
-    fun getUserCollegeById(id:String): String?{
+    // 회원가입 시 ID 중복 여부 확인에 사용됨
+    fun isUserExists(id: String): Boolean {
         val db = readableDatabase
-        val cursor = db.rawQuery("SELECT college FROM users WHERE id = ?",
-            arrayOf(id))
-
-        return if(cursor.moveToFirst()){
-            val college = cursor.getString(0)
-            cursor.close()
-            college
-        }else{
-            cursor.close()
-            null
-        }
+        val cursor = db.rawQuery("SELECT * FROM users WHERE id = ?", arrayOf(id))
+        val exists = cursor.count > 0
+        cursor.close()
+        return exists
     }
+
+    // 개발 중 테스트 용 계정 삭제 위한 함수 -> 로그인 화면에 버튼으로 구현 -> 실제 배포 시 삭제
+    fun deleteAllUsers() {
+        val db = writableDatabase
+        db.delete("users", null, null)
+    }
+
 }

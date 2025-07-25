@@ -9,30 +9,30 @@
         android:id="@+id/signupButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="23dp"
-        android:layout_marginEnd="100dp"
+        android:layout_marginStart="100dp"
+        android:layout_marginTop="20dp"
         android:background="@drawable/round_button"
         android:backgroundTint="@color/swu_blue"
         android:text="회원가입"
-        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pwEditText" />
 
     <Button
         android:id="@+id/loginButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="100dp"
-        android:layout_marginTop="23dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginEnd="100dp"
         android:background="@drawable/round_button"
         android:backgroundTint="@color/swu_blue"
         android:text="로그인"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/pwEditText" />
 
     <EditText
         android:id="@+id/idEditText"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="157dp"
+        android:layout_height="44dp"
         android:layout_marginTop="184dp"
         android:hint="학번 입력"
         app:layout_constraintEnd_toEndOf="parent"
@@ -42,8 +42,8 @@
 
     <EditText
         android:id="@+id/pwEditText"
-        android:layout_width="76dp"
-        android:layout_height="44dp"
+        android:layout_width="161dp"
+        android:layout_height="41dp"
         android:layout_marginTop="15dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.501"
@@ -69,5 +69,15 @@
         android:text="PW :"
         app:layout_constraintEnd_toStartOf="@id/pwEditText"
         app:layout_constraintTop_toBottomOf="@+id/ID" />
+
+    <Button
+        android:id="@+id/DeleteTestID"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="13dp"
+        android:layout_marginBottom="16dp"
+        android:text="DeleteTEST"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
