@@ -23,7 +23,7 @@ class BuildingDetailActivity : AppCompatActivity() { // 반드시 AppCompatActiv
             "liberal_arts" -> { // MainActivity의 "liberal_arts_info" 태그에서 "liberal_arts"를 가져옵니다.
                 buildingNameTextView.text = "인문사회관"
                 buildingDescriptionTextView.text = "1층에 GS25 편의점과 휴게 공간, 2층에 러닝커먼스 휴게 공간, 3층에 프린트존이 있습니다."
-                buildingImageView.setImageResource(R.drawable.liberal_arts_building_image)
+                buildingImageView.setImageResource(R.drawable.humanities_social_science_building_image)
             }
             "first_science" -> { // "first_science_info" 태그에 해당
                 buildingNameTextView.text = "제1과학관"
