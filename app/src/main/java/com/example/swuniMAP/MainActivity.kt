@@ -110,19 +110,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateQuizProgress() {
         val percentage = if (totalQuizzes > 0) (completedQuizzes * 100) / totalQuizzes else 0
-        quizProgressTextView.text = "퀴즈 수행률: ${completedQuizzes}/${totalQuizzes} (${percentage}%)"
+        quizProgressTextView.text = "퀴즈 진행률: ${completedQuizzes}/${totalQuizzes} (${percentage}%)"
     }
 
     private fun addBuildingMarkers(kakaoMap: KakaoMap) {
         val labelManager = kakaoMap.labelManager
 
         val infoMarkerStyle = LabelStyles.from(
-            LabelStyle.from(R.drawable.ic_marker_info)
+            LabelStyle.from(R.drawable.marker_info)
                 .setTextStyles(30, Color.BLACK)
         )
 
         val quizMarkerStyle = LabelStyles.from(
-            LabelStyle.from(R.drawable.ic_marker_quiz)
+            LabelStyle.from(R.drawable.marker_quiz)
                 .setTextStyles(30, Color.BLACK)
         )
 
