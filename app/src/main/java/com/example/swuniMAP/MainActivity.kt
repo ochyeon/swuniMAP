@@ -18,6 +18,8 @@ import android.content.Intent
 import com.kakao.vectormap.label.Label
 import android.app.Activity
 import androidx.activity.result.contract.ActivityResultContracts
+import com.kakao.vectormap.KakaoMapReadyCallback
+import com.kakao.vectormap.KakaoMapSdk
 
 
 class MainActivity : AppCompatActivity() {
@@ -45,6 +47,9 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
+
         setContentView(R.layout.activity_main)
 
         mapView = findViewById(R.id.map_view)
@@ -61,7 +66,16 @@ class MainActivity : AppCompatActivity() {
 
         // MapLifeCycleCallback 사용, onMapError 다시 포함
         mapView.start(object : MapLifeCycleCallback() {
-            override fun onMapCreated(kakaoMap: KakaoMap) {
+
+            override fun onMapDestroy() {
+                // 이 메서드는 비워두어도 됩니다.
+            }
+
+            override fun onMapError(error: Exception) { // onMapError 다시 추가 (필수)
+                Toast.makeText(this@MainActivity, "지도 로딩 오류: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        }, object: KakaoMapReadyCallback(){
+            override fun onMapReady(kakaoMap: KakaoMap) {
                 addBuildingMarkers(kakaoMap)
 
                 kakaoMap.setOnLabelClickListener { _, label, _ ->
@@ -87,14 +101,6 @@ class MainActivity : AppCompatActivity() {
                     }
                     true
                 }
-            }
-
-            override fun onMapDestroy() {
-                // 이 메서드는 비워두어도 됩니다.
-            }
-
-            override fun onMapError(error: Exception) { // onMapError 다시 추가 (필수)
-                Toast.makeText(this@MainActivity, "지도 로딩 오류: ${error.message}", Toast.LENGTH_LONG).show()
             }
         })
 
@@ -126,7 +132,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(liberalArtsLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder.from("인문사회관")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("인문사회관",0)) // LabelTextBuilder.from() 사용
                 .setTag("liberal_arts_info")
         )
 
@@ -135,7 +141,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(firstScienceLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder.from("제1과학관")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("제1과학관", 0)) // LabelTextBuilder.from() 사용
                 .setTag("first_science_info")
         )
 
@@ -144,7 +150,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(secondScienceLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder.from("제2과학관")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("제2과학관", 0)) // LabelTextBuilder.from() 사용
                 .setTag("second_science_info")
         )
 
@@ -153,7 +159,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(artHallLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder.from("조형예술관")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("조형예술관", 0)) // LabelTextBuilder.from() 사용
                 .setTag("art_hall_info")
         )
 
@@ -162,7 +168,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(anniversaryHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder.from("50주년 퀴즈 1")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("50주년 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
                 .setTag("anniversary_quiz_1")
         )
 
@@ -170,14 +176,14 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(nuriHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder.from("누리관 퀴즈 1")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
                 .setTag("nuri_hall_quiz_1")
         )
         val nuriHallQuizLocation2 = LatLng.from(37.6291, 127.0891)
         labelManager?.layer?.addLabel(
             LabelOptions.from(nuriHallQuizLocation2)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder.from("누리관 퀴즈 2")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 2", 0)) // LabelTextBuilder.from() 사용
                 .setTag("nuri_hall_quiz_2")
         )
 
@@ -185,14 +191,14 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(libraryQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder.from("도서관 퀴즈 1")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
                 .setTag("library_quiz_1")
         )
         val libraryQuizLocation2 = LatLng.from(37.6296, 127.0886)
         labelManager?.layer?.addLabel(
             LabelOptions.from(libraryQuizLocation2)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder.from("도서관 퀴즈 2")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 2", 0)) // LabelTextBuilder.from() 사용
                 .setTag("library_quiz_2")
         )
 
@@ -200,7 +206,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(christianEdHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder.from("기독교 교육관 퀴즈 1")) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("기독교 교육관 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
                 .setTag("christian_ed_quiz_1")
         )
     }
