@@ -93,7 +93,7 @@ class MainActivity : AppCompatActivity() {
                 val cameraUpdate = CameraUpdateFactory.fitMapPoints(campusPoints, 50)
                 map.moveCamera(cameraUpdate)
 
-                // 초기 줌 레벨 저장 -> 지도의 최소 축소 배율
+                // 초기 줌 레벨 저장 -> 지도의 최소 축소 배율 -> 더 축소하면 자동으로 배율 복원
                 minZoomLevel = map.cameraPosition?.zoomLevel?.toFloat()
 
                 Log.d("Map", "카메라 캠퍼스 전체로 이동 완료")
