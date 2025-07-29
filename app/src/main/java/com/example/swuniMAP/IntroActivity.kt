@@ -17,6 +17,7 @@ class IntroActivity : AppCompatActivity() {
         startButton.setOnClickListener {
             Toast.makeText(this, "탐험 시작!", Toast.LENGTH_SHORT).show()
             startActivity(Intent(this, MainActivity::class.java))
+            finish() // Let's Go! 버튼 클릭 후 다시 로그인 화면으로 돌아오는 문제 방지
         }
     }
 }
