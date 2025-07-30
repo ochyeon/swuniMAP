@@ -45,6 +45,13 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         "christian_ed_quiz"   to 1
     )
 
+    private val quizGroupToSubIds = mapOf(
+        "nuri_hall_quiz" to listOf("nuri_hall_quiz_1", "nuri_hall_quiz_2"),
+        "library_quiz" to listOf("library_quiz_1", "library_quiz_2"),
+        "anniversary_quiz" to listOf("anniversary_quiz_1"),
+        "christian_ed_quiz" to listOf("christian_ed_quiz_1")
+    )
+
     private var userLocationMarker : Marker? = null
 
     // 위치 권한 요청을 위한 고유 코드 정의
@@ -59,19 +66,34 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val correctCount = data.getIntExtra("CORRECT_COUNT", 0)
             val totalCount = quizSizeMap[quizId] ?: return@registerForActivityResult
 
-            // 모두 맞히면 완료 처리
-            if (correctCount == totalCount && quizCompletionStatus[quizId] == false) {
-                quizCompletionStatus[quizId] = true
-                completedQuizzes ++
+            // 모두 맞혔을 때 묶음 처리
+            if (correctCount == totalCount) {
+                val subQuizIds = when (quizId) {
+                    "nuri_hall_quiz" -> listOf("nuri_hall_quiz_1", "nuri_hall_quiz_2")
+                    "library_quiz" -> listOf("library_quiz_1", "library_quiz_2")
+                    "anniversary_quiz" -> listOf("anniversary_quiz_1")
+                    "christian_ed_quiz" -> listOf("christian_ed_quiz_1")
+                    else -> listOf(quizId) // 혹시 문제 단일 ID라면 그대로 처리
+                }
+
+                subQuizIds.forEach { id ->
+                    if (quizCompletionStatus[id] == false) {
+                        quizCompletionStatus[id] = true
+                        completedQuizzes++
+                    }
+                }
+
                 updateQuizProgress()
+                saveQuizCompletionStatus()
+
                 Toast.makeText(
                     this,
                     "$quizId 미션 성공!",
                     Toast.LENGTH_SHORT
                 ).show()
-                saveQuizCompletionStatus()
             }
         }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -271,15 +293,22 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     val clickedTag = it.tag as? String
                     clickedTag?.let { id ->
                         if (id.contains("quiz")) {
-                            if (quizCompletionStatus[id] == true) {
+                            // 묶음 퀴즈라면 하위 문제 리스트 가져오기, 없으면 자기 자신만 리스트로
+                            val subQuizIds = quizGroupToSubIds[id] ?: listOf(id)
+                            // 모든 하위 퀴즈가 완료됐는지 검사
+                            val allCompleted = subQuizIds.all { quizCompletionStatus[it] == true }
+
+                            if (allCompleted) {
                                 Toast.makeText(this@MainActivity, "완료된 미션입니다.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                val intent = Intent(this@MainActivity, QuizActivity::class.java)
-                                intent.putExtra("QUIZ_ID", id)
-                                quizResultLauncher.launch(intent)
+                                return@setOnClickListener true // 클릭 이벤트 소비, 이후 진행 차단
                             }
+
+                            // 완료 안 된 경우에만 퀴즈 액티비티 실행
+                            val intent = Intent(this@MainActivity, QuizActivity::class.java)
+                            intent.putExtra("QUIZ_ID", id)
+                            quizResultLauncher.launch(intent)
                         } else if (id.contains("info")) {
-                            val buildingId = id.removeSuffix("_info") // "liberal_arts_info" → "liberal_arts"
+                            val buildingId = id.removeSuffix("_info")
                             val intent = Intent(this@MainActivity, BuildingDetailActivity::class.java)
                             intent.putExtra("BUILDING_ID", buildingId)
                             startActivity(intent)
@@ -289,6 +318,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     }
                     true
                 }
+
             }
             buildingMarkers.add(marker)
         }

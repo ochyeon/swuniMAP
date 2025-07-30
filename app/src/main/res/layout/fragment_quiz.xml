@@ -60,7 +60,8 @@
         android:gravity="center"
         android:padding="12dp"
         android:textSize="16sp"
-        android:visibility="gone" />
+        android:visibility="gone"
+        android:inputType="text"/>
 
     <!-- 다음 또는 제출 버튼 -->
     <Button
