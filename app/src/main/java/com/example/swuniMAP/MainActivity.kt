@@ -42,22 +42,37 @@ class MainActivity : AppCompatActivity() {
 
     private val quizCompletionStatus = mutableMapOf<String, Boolean>()
 
+    private val quizSizeMap = mapOf(
+        "library_quiz"        to 2,
+        "nuri_hall_quiz"      to 2,
+        "anniversary_quiz"    to 1,
+        "christian_ed_quiz"   to 1
+    )
+
     // 위치 권한 요청을 위한 고유 코드 정의
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
-    private val quizResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-        if (result.resultCode == Activity.RESULT_OK) {
-            val quizId = result.data?.getStringExtra("QUIZ_ID")
-            val isQuizCompleted = result.data?.getBooleanExtra("IS_QUIZ_COMPLETED", false) ?: false
+    private val quizResultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode != Activity.RESULT_OK) return@registerForActivityResult
 
-            if (quizId != null && isQuizCompleted && quizCompletionStatus[quizId] == false) {
+            val data = result.data ?: return@registerForActivityResult
+            val quizId = data.getStringExtra("QUIZ_ID") ?: return@registerForActivityResult
+            val correctCount = data.getIntExtra("CORRECT_COUNT", 0)
+            val totalCount = quizSizeMap[quizId] ?: return@registerForActivityResult
+
+            // 모두 맞히면 완료 처리
+            if (correctCount == totalCount && quizCompletionStatus[quizId] == false) {
                 quizCompletionStatus[quizId] = true
-                completedQuizzes++
+                completedQuizzes += correctCount
                 updateQuizProgress()
-                Toast.makeText(this, "$quizId 퀴즈 완료! (${completedQuizzes}/${totalQuizzes})", Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    "$quizId 미션 성공!",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,12 +84,10 @@ class MainActivity : AppCompatActivity() {
         mapView = findViewById(R.id.map_view)
         quizProgressTextView = findViewById(R.id.quizProgressTextView)
 
-        quizCompletionStatus["anniversary_quiz_1"] = false
-        quizCompletionStatus["nuri_hall_quiz_1"] = false
-        quizCompletionStatus["nuri_hall_quiz_2"] = false
-        quizCompletionStatus["library_quiz_1"] = false
-        quizCompletionStatus["library_quiz_2"] = false
-        quizCompletionStatus["christian_ed_quiz_1"] = false
+        quizCompletionStatus["anniversary_quiz"] = false
+        quizCompletionStatus["nuri_hall_quiz"] = false
+        quizCompletionStatus["library_quiz"] = false
+        quizCompletionStatus["christian_ed_quiz"] = false
 
         updateQuizProgress()
 
@@ -137,7 +150,7 @@ class MainActivity : AppCompatActivity() {
                     updateMarkers(iconSize)
                 }
 
-                map.setOnLabelClickListener { _, label, _ ->
+                map.setOnLabelClickListener { _,_,label ->
                     val tag = label.tag as? String
                     Log.d("MapClick", "Label clicked. Tag: $tag") // 디버그 로그 추가
                     tag?.let {
@@ -147,15 +160,17 @@ class MainActivity : AppCompatActivity() {
                             val intent = Intent(this@MainActivity, BuildingDetailActivity::class.java)
                             intent.putExtra("BUILDING_ID", buildingId)
                             startActivity(intent)
-                        } else if (it.endsWith("_quiz_1") || it.endsWith("_quiz_2")) {
+                        } else if (it.endsWith("_quiz")) {
                             Log.d("MapClick", "Opening QuizActivity for: $it") // 디버그 로그 추가
-                            val buildingId = it.substringBefore("_quiz_")
-                            val quizNumber = it.substringAfterLast("_").toIntOrNull()
                             val quizId = it
 
+                            //완료된 퀴즈인지 체크
+                            if(quizCompletionStatus[quizId] == true){
+                                Toast.makeText(this@MainActivity, "완료된 미션입니다.", Toast.LENGTH_SHORT).show()
+                                return@setOnLabelClickListener true
+                            }
+
                             val intent = Intent(this@MainActivity, QuizActivity::class.java)
-                            intent.putExtra("BUILDING_ID", buildingId)
-                            intent.putExtra("QUIZ_NUMBER", quizNumber)
                             intent.putExtra("QUIZ_ID", quizId)
 
                             quizResultLauncher.launch(intent)
@@ -310,7 +325,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(liberalArtsLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("인문사회관", 0))
+//                .setTexts(LabelTextBuilder().addTextLine("인문사회관", 0))
                 .setTag("liberal_arts_info")
         )
 
@@ -318,7 +333,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(firstScienceLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("제1 과학관", 0))
+//                .setTexts(LabelTextBuilder().addTextLine("제1 과학관", 0))
                 .setTag("first_science_info")
         )
 
@@ -326,7 +341,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(secondScienceLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("제2 과학관", 0))
+//                .setTexts(LabelTextBuilder().addTextLine("제2 과학관", 0))
                 .setTag("second_science_info")
         )
 
@@ -334,7 +349,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(artHallLocation)
                 .setStyles(infoMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("조형예술관", 0))
+//                .setTexts(LabelTextBuilder().addTextLine("조형예술관", 0))
                 .setTag("art_hall_info")
         )
 
@@ -342,46 +357,32 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(anniversaryHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("50주년 퀴즈 1", 0))
-                .setTag("anniversary_quiz_1")
+//                .setTexts(LabelTextBuilder().addTextLine("50주년 퀴즈 1", 0))
+                .setTag("anniversary_quiz")
         )
 
         val nuriHallQuizLocation1 = LatLng.from(37.62873, 127.0906)
         labelManager?.layer?.addLabel(
             LabelOptions.from(nuriHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0))
-                .setTag("nuri_hall_quiz_1")
-        )
-        val nuriHallQuizLocation2 = LatLng.from(37.6291, 127.0891)
-        labelManager?.layer?.addLabel(
-            LabelOptions.from(nuriHallQuizLocation2)
-                .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 2", 0))
-                .setTag("nuri_hall_quiz_2")
+//                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0))
+                .setTag("nuri_hall_quiz")
         )
 
         val libraryQuizLocation1 = LatLng.from(37.62857, 127.0913)
         labelManager?.layer?.addLabel(
             LabelOptions.from(libraryQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0))
-                .setTag("library_quiz_1")
-        )
-        val libraryQuizLocation2 = LatLng.from(37.6296, 127.0886)
-        labelManager?.layer?.addLabel(
-            LabelOptions.from(libraryQuizLocation2)
-                .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 2", 0))
-                .setTag("library_quiz_2")
+//                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0))
+                .setTag("library_quiz")
         )
 
         val christianEdHallQuizLocation1 = LatLng.from(37.62709, 127.0925)
         labelManager?.layer?.addLabel(
             LabelOptions.from(christianEdHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("기독교 교육관 퀴즈 1", 0))
-                .setTag("christian_ed_quiz_1")
+//                .setTexts(LabelTextBuilder().addTextLine("기독교 교육관 퀴즈 1", 0))
+                .setTag("christian_ed_quiz")
         )
     }
 
