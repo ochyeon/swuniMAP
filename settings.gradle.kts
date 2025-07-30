@@ -17,9 +17,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
 
-        // 카카오 벡터맵 SDK 전용 저장소 추가
+        // 네이버 지도 저장소
         maven{
-            url = uri("https://devrepo.kakao.com/nexus/content/groups/public/")
+            url = uri("https://repository.map.naver.com/archive/maven")
         }
     }
 }

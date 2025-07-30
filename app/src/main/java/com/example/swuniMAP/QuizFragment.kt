@@ -107,20 +107,20 @@ class QuizFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        if (questions.isEmpty()) {
-            // 예외 처리 or placeholder 텍스트
-            questionTv.text = "유효하지 않은 퀴즈입니다."
-            nextBtn.isEnabled = false
-            return
-        }
-
-        // 3. 뷰 바인딩
+        // 1. 뷰 바인딩
         questionTv = view.findViewById(R.id.textViewQuestion)
         hintTv = view.findViewById(R.id.textViewHint)
         photoIv    = view.findViewById(R.id.imageViewPhoto)
         optionsRg  = view.findViewById(R.id.radioGroupOptions)
         answerEt   = view.findViewById(R.id.editTextAnswer)
         nextBtn    = view.findViewById(R.id.buttonNext)
+
+        if (questions.isEmpty()) {
+            // 예외 처리 or placeholder 텍스트
+            questionTv.text = "유효하지 않은 퀴즈입니다."
+            nextBtn.isEnabled = false
+            return
+        }
 
         // 4. 첫 문제 표시
         showQuestion(currentIndex)

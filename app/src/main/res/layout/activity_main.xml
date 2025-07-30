@@ -5,7 +5,8 @@
     android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    tools:context=".MainActivity"
+    android:fitsSystemWindows="true">
 
     <LinearLayout
         android:id="@+id/topMenuBar"
@@ -44,8 +45,8 @@
 
     </LinearLayout>
 
-    <com.kakao.vectormap.MapView
-        android:id="@+id/map_view"
+    <FrameLayout
+        android:id="@+id/map_container"
         android:layout_width="0dp"
         android:layout_height="0dp"
         app:layout_constraintTop_toBottomOf="@id/topMenuBar"
