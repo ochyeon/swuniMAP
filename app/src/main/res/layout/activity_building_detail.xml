@@ -5,26 +5,60 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context=".BuildingDetailActivity"> <ImageView
-    android:id="@+id/buildingImage"
-    android:layout_width="match_parent"
-    android:layout_height="200dp"
-    android:scaleType="centerCrop"
-    android:src="@drawable/placeholder_building_image" android:contentDescription="건물 이미지"/>
+    tools:context=".BuildingDetailActivity">
 
-    <TextView
-        android:id="@+id/buildingName"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="건물 이름" android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginTop="16dp"/>
-
-    <TextView
-        android:id="@+id/buildingDescription"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="여기에 건물의 상세한 설명이 나타날 예정입니다." android:textSize="16sp"
-        android:layout_marginTop="8dp"/>
+        android:layout_height="match_parent">
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <ImageView
+                android:id="@+id/buildingImage"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:src="@drawable/placeholder_building_image"
+                android:contentDescription="건물 이미지"/>
+
+            <TextView
+                android:id="@+id/buildingName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="건물 이름"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:layout_marginTop="16dp"/>
+
+            <TextView
+                android:id="@+id/buildingDescription"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="여기에 건물의 상세한 설명이 나타날 예정입니다."
+                android:textSize="16sp"
+                android:layout_marginTop="8dp"/>
+
+            <ImageView
+                android:id="@+id/buildingImage2"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                android:contentDescription="추가 건물 이미지 1"/>
+
+            <ImageView
+                android:id="@+id/buildingImage3"
+                android:layout_width="match_parent"
+                android:layout_height="200dp"
+                android:scaleType="centerCrop"
+                android:layout_marginTop="16dp"
+                android:visibility="gone"
+                android:contentDescription="추가 건물 이미지 2"/>
+
+        </LinearLayout>
+    </ScrollView>
 </LinearLayout>
