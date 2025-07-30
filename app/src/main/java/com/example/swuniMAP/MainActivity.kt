@@ -91,6 +91,11 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                     "$quizId 미션 성공!",
                     Toast.LENGTH_SHORT
                 ).show()
+
+                if(completedQuizzes >= totalQuizzes){
+                    startActivity(Intent(this, FinishActivity::class.java))
+                    finish()
+                }
             }
         }
 
@@ -330,26 +335,33 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun saveQuizCompletionStatus() {
-        val prefs = getSharedPreferences("quiz_prefs", MODE_PRIVATE)
-        val editor = prefs.edit()
+        val currentId = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            .getString("CURRENT_USER_ID", null)
+            ?: return
+        val quizPrefs = getSharedPreferences("quiz_prefs_$currentId", MODE_PRIVATE)
+        val editor = quizPrefs.edit()
 
-        for ((quizId, isCompleted) in quizCompletionStatus) {
+        quizCompletionStatus.forEach { (quizId, isCompleted) ->
             editor.putBoolean(quizId, isCompleted)
         }
-        editor.apply()  // 비동기 저장
+        editor.apply()
     }
 
+
     private fun loadQuizCompletionStatus() {
-        val prefs = getSharedPreferences("quiz_prefs", MODE_PRIVATE)
+        val currentId = getSharedPreferences("user_prefs", MODE_PRIVATE)
+            .getString("CURRENT_USER_ID", null)
+            ?: return
+        val quizPrefs = getSharedPreferences("quiz_prefs_$currentId", MODE_PRIVATE)
 
         for (quizId in quizCompletionStatus.keys) {
-            val isCompleted = prefs.getBoolean(quizId, false)
+            val isCompleted = quizPrefs.getBoolean(quizId, false)
             quizCompletionStatus[quizId] = isCompleted
         }
-
         completedQuizzes = quizCompletionStatus.count { it.value }
         updateQuizProgress()
     }
+
 
     override fun onDestroy() {
         super.onDestroy()

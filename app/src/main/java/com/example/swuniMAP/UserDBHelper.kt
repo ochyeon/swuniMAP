@@ -74,4 +74,10 @@ class UserDBHelper(context: Context) :
         db.delete("users", null, null)
     }
 
+    fun deleteUser(id: String): Boolean {
+        val db = writableDatabase
+        val rows = db.delete("users", "id = ?", arrayOf(id))
+        return rows > 0
+    }
+
 }

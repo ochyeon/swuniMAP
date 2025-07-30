@@ -31,6 +31,11 @@ class LoginActivity : AppCompatActivity() {
 
             if(dbHelper.loginUser(id, pw)){
                 Toast.makeText(this, "로그인 성공", Toast.LENGTH_SHORT).show()
+
+                //로그인 id를 prefs에 저장
+                val prefs = getSharedPreferences("user_prefs", MODE_PRIVATE)
+                prefs.edit().putString("CURRENT_USER_ID", id).apply()
+
                 startActivity(Intent(this, IntroActivity::class.java))
             }else{
                 Toast.makeText(this, "로그인 실패", Toast.LENGTH_SHORT).show()
