@@ -17,13 +17,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.GURU2B10"
         tools:targetApi="31">
-        <activity
-            android:name=".QuizActivity"
-            android:exported="false" />
-        <!-- 카카오 네이티브 앱 키 메타데이터 추가 -->
-        <meta-data
-            android:name="com.kakao.vectormap.KAKAO_MAP_KEY"
-            android:value="a31e7bfdd6eb8702e14303b8df909522" /> <!-- LoginActivity 추가 -->
         <!-- 앱 실행 시 로그인 화면이 먼저 보임 -> 로그인 성공 시 IntroActivity 화면으로 -->
         <activity
             android:name=".LoginActivity"
@@ -34,8 +27,14 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".IntroActivity" />
-        <activity android:name=".MainActivity" />
+        <activity android:name=".IntroActivity" android:exported="false" /> <activity android:name=".MainActivity" android:exported="false" /> <activity
+        android:name=".QuizActivity"
+        android:exported="false" />
+        <activity
+            android:name=".BuildingDetailActivity"
+            android:exported="false" /> <meta-data
+        android:name="com.kakao.vectormap.KAKAO_MAP_KEY"
+        android:value="a31e7bfdd6eb8702e14303b8df909522" />
     </application>
 
 </manifest>
