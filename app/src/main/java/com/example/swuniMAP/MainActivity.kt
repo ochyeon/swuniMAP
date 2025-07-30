@@ -12,7 +12,7 @@ import com.kakao.vectormap.LatLng
 import com.kakao.vectormap.label.LabelOptions
 import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelStyles
-import com.kakao.vectormap.label.LabelTextBuilder // LabelTextBuilder 다시 임포트
+import com.kakao.vectormap.label.LabelTextBuilder
 import android.content.Intent
 import android.app.Activity
 import android.location.LocationManager
@@ -22,6 +22,12 @@ import com.kakao.vectormap.KakaoMapReadyCallback
 import com.kakao.vectormap.KakaoMapSdk
 import com.kakao.vectormap.camera.CameraUpdateFactory
 import com.kakao.vectormap.camera.CameraPosition
+
+// 런타임 권한 요청을 위한 import 추가
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 
 
 class MainActivity : AppCompatActivity() {
@@ -35,6 +41,9 @@ class MainActivity : AppCompatActivity() {
     private var minZoomLevel: Float? = null
 
     private val quizCompletionStatus = mutableMapOf<String, Boolean>()
+
+    // 위치 권한 요청을 위한 고유 코드 정의
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
     private val quizResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -69,14 +78,13 @@ class MainActivity : AppCompatActivity() {
 
         updateQuizProgress()
 
-        // MapLifeCycleCallback 사용, onMapError 다시 포함
         mapView.start(object : MapLifeCycleCallback() {
 
             override fun onMapDestroy() {
                 // 이 메서드는 비워두어도 됩니다.
             }
 
-            override fun onMapError(error: Exception) { // onMapError 다시 추가 (필수)
+            override fun onMapError(error: Exception) {
                 Toast.makeText(this@MainActivity, "지도 로딩 오류: ${error.message}", Toast.LENGTH_LONG).show()
             }
         }, object: KakaoMapReadyCallback(){
@@ -131,13 +139,16 @@ class MainActivity : AppCompatActivity() {
 
                 map.setOnLabelClickListener { _, label, _ ->
                     val tag = label.tag as? String
+                    Log.d("MapClick", "Label clicked. Tag: $tag") // 디버그 로그 추가
                     tag?.let {
                         if (it.endsWith("_info")) {
+                            Log.d("MapClick", "Opening BuildingDetailActivity for: $it") // 디버그 로그 추가
                             val buildingId = it.substringBefore("_info")
                             val intent = Intent(this@MainActivity, BuildingDetailActivity::class.java)
                             intent.putExtra("BUILDING_ID", buildingId)
                             startActivity(intent)
                         } else if (it.endsWith("_quiz_1") || it.endsWith("_quiz_2")) {
+                            Log.d("MapClick", "Opening QuizActivity for: $it") // 디버그 로그 추가
                             val buildingId = it.substringBefore("_quiz_")
                             val quizNumber = it.substringAfterLast("_").toIntOrNull()
                             val quizId = it
@@ -153,11 +164,46 @@ class MainActivity : AppCompatActivity() {
                     true
                 }
 
-                // 현재 위치 마커 표시
-                showCurrentLocationMarker()
+                // 지도가 준비된 후 권한 확인 및 현재 위치 마커 표시를 시작합니다.
+                checkLocationPermission()
             }
         })
     }
+
+    // --- 런타임 권한 요청 및 처리 로직 추가 시작 ---
+    private fun checkLocationPermission() {
+        // ACCESS_FINE_LOCATION 권한이 있는지 확인
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            // 권한이 없는 경우 사용자에게 권한 요청
+            ActivityCompat.requestPermissions(this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE)
+        } else {
+            // 권한이 이미 있는 경우 위치 업데이트 시작
+            showCurrentLocationMarker()
+        }
+    }
+
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // 사용자가 위치 권한을 허용한 경우
+                showCurrentLocationMarker()
+            } else {
+                // 사용자가 위치 권한을 거부한 경우
+                Toast.makeText(this, "위치 권한이 거부되어 현재 위치를 표시할 수 없습니다. 캠퍼스 내에서 앱을 사용해주세요.", Toast.LENGTH_LONG).show()
+
+                // 교외 지역 처리 로직과 동일하게 IntroActivity로 전환
+                val intent = Intent(this, IntroActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+                finish()
+            }
+        }
+    }
+    // --- 런타임 권한 요청 및 처리 로직 추가 끝 ---
+
 
     // 현 위치 가져오기
     private fun showCurrentLocationMarker(){
@@ -189,15 +235,26 @@ class MainActivity : AppCompatActivity() {
                         finish()
                     }
                 }?: run{
-                    Toast.makeText(this, "현재 위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
+                    // 위치를 가져올 수 없지만, 이는 권한 문제가 아닐 가능성이 높음 (기기가 위치 정보를 제공하지 못할 때)
+                    Toast.makeText(this, "현재 위치를 가져올 수 없습니다. 위치 설정을 확인해주세요.", Toast.LENGTH_SHORT).show()
                 }
             }catch(e:SecurityException){
-                e.printStackTrace()
+                // 권한이 없어서 발생할 수 있는 예외 (Logcat에서 확인 가능)
+                Log.e("Location", "위치 권한 오류: ${e.message}")
+                Toast.makeText(this, "위치 권한이 없어 현재 위치를 가져올 수 없습니다.", Toast.LENGTH_SHORT).show()
             }
+        } ?: run {
+            // GPS나 네트워크 제공자가 없을 경우
+            Toast.makeText(this, "위치 서비스를 활성화해주세요.", Toast.LENGTH_LONG).show()
         }
     }
 
     private fun showCurrentLocationMarkerOnMap(latLng: LatLng) {
+        // 기존에 user_location 마커가 있다면 제거
+        kakaoMap?.labelManager?.layer?.getLabel("user_location")?.run {
+            kakaoMap?.labelManager?.layer?.remove(this)
+        }
+
         kakaoMap?.labelManager?.layer?.addLabel(
             LabelOptions.from(latLng)
                 .setTag("user_location")
@@ -220,7 +277,6 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-
     private fun calculateIconSize(zoom: Int):Int{
         return when{
             zoom < 10f -> 15
@@ -231,8 +287,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun updateMarkers(iconSize: Int) {
         val map = kakaoMap ?: return
-        map.labelManager?.layer?.removeAll()
-        addBuildingMarkers(map, iconSize)
+        map.labelManager?.layer?.removeAll() // 기존 마커 전체 제거
+        addBuildingMarkers(map, iconSize) // 새 아이콘 크기로 마커 다시 추가
+        showCurrentLocationMarkerOnMap(map.cameraPosition?.position ?: LatLng.from(0.0, 0.0)) // 현재 위치 마커 다시 추가 (임시 LatLng, 실제 위치로 업데이트 필요)
     }
 
     private fun addBuildingMarkers(kakaoMap: KakaoMap, iconSize: Int) {
@@ -285,7 +342,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(anniversaryHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("50주년 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("50주년 퀴즈 1", 0))
                 .setTag("anniversary_quiz_1")
         )
 
@@ -293,14 +350,14 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(nuriHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0))
                 .setTag("nuri_hall_quiz_1")
         )
         val nuriHallQuizLocation2 = LatLng.from(37.6291, 127.0891)
         labelManager?.layer?.addLabel(
             LabelOptions.from(nuriHallQuizLocation2)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 2", 0)) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 2", 0))
                 .setTag("nuri_hall_quiz_2")
         )
 
@@ -308,14 +365,14 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(libraryQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0))
                 .setTag("library_quiz_1")
         )
         val libraryQuizLocation2 = LatLng.from(37.6296, 127.0886)
         labelManager?.layer?.addLabel(
             LabelOptions.from(libraryQuizLocation2)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 2", 0)) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 2", 0))
                 .setTag("library_quiz_2")
         )
 
@@ -323,7 +380,7 @@ class MainActivity : AppCompatActivity() {
         labelManager?.layer?.addLabel(
             LabelOptions.from(christianEdHallQuizLocation1)
                 .setStyles(quizMarkerStyle)
-                .setTexts(LabelTextBuilder().addTextLine("기독교 교육관 퀴즈 1", 0)) // LabelTextBuilder.from() 사용
+                .setTexts(LabelTextBuilder().addTextLine("기독교 교육관 퀴즈 1", 0))
                 .setTag("christian_ed_quiz_1")
         )
     }
