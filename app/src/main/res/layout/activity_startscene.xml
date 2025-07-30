@@ -6,11 +6,23 @@
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
+    <TextView
+        android:id="@+id/iconImage"
+        android:layout_width="315dp"
+        android:layout_height="88dp"
+        android:layout_marginTop="131dp"
+        android:gravity="center"
+        android:text="슈니들과 함께하는\n즐거운 학교 투어"
+        android:textSize="30sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
     <Button
         android:id="@+id/startButton"
         android:layout_width="132dp"
         android:layout_height="61dp"
-        android:layout_marginTop="67dp"
+        android:layout_marginTop="140dp"
         android:background="@drawable/round_button"
         android:text="Let's Go!"
         android:textSize="16sp"
@@ -20,21 +32,10 @@
         app:layout_constraintTop_toBottomOf="@+id/swuniMAPText" />
 
     <TextView
-        android:id="@+id/iconImage"
-        android:layout_width="315dp"
-        android:layout_height="88dp"
-        android:gravity="center"
-        android:text="슈니들과 함께하는\n즐거운 학교 투어"
-        android:textSize="30sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:layout_editor_absoluteY="84dp" />
-
-    <TextView
         android:id="@+id/swuniMAPText"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="36dp"
+        android:layout_marginTop="44dp"
         android:text="SWUNI MAP"
         android:textSize="34sp"
         app:layout_constraintEnd_toEndOf="parent"

@@ -268,16 +268,23 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
                 // 필요하면 캡션(텍스트)도 설정 가능
                 // this.captionText = tag
                 setOnClickListener {
-                    // 클릭 시 처리 (예: 퀴즈 열기, 상세정보 보기 등)
                     val clickedTag = it.tag as? String
                     clickedTag?.let { id ->
-                        if (quizCompletionStatus[id] == true) {
-                            Toast.makeText(this@MainActivity, "완료된 미션입니다.", Toast.LENGTH_SHORT).show()
+                        if (id.contains("quiz")) {
+                            if (quizCompletionStatus[id] == true) {
+                                Toast.makeText(this@MainActivity, "완료된 미션입니다.", Toast.LENGTH_SHORT).show()
+                            } else {
+                                val intent = Intent(this@MainActivity, QuizActivity::class.java)
+                                intent.putExtra("QUIZ_ID", id)
+                                quizResultLauncher.launch(intent)
+                            }
+                        } else if (id.contains("info")) {
+                            val buildingId = id.removeSuffix("_info") // "liberal_arts_info" → "liberal_arts"
+                            val intent = Intent(this@MainActivity, BuildingDetailActivity::class.java)
+                            intent.putExtra("BUILDING_ID", buildingId)
+                            startActivity(intent)
                         } else {
-                            // 퀴즈 액티비티 실행 등
-                            val intent = Intent(this@MainActivity, QuizActivity::class.java)
-                            intent.putExtra("QUIZ_ID", id)
-                            quizResultLauncher.launch(intent)
+                            Toast.makeText(this@MainActivity, "알 수 없는 마커입니다.", Toast.LENGTH_SHORT).show()
                         }
                     }
                     true
