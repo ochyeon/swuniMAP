@@ -71,14 +71,4 @@
         app:layout_constraintEnd_toStartOf="@id/pwEditText"
         app:layout_constraintTop_toBottomOf="@+id/ID" />
 
-    <Button
-        android:id="@+id/DeleteTestID"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="13dp"
-        android:layout_marginBottom="16dp"
-        android:text="DeleteTEST"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
-
 </androidx.constraintlayout.widget.ConstraintLayout>

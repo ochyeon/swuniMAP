@@ -21,8 +21,6 @@ class LoginActivity : AppCompatActivity() {
         val pwEditText = findViewById<EditText>(R.id.pwEditText)
         val loginButton = findViewById<Button>(R.id.loginButton)
         val signupButton = findViewById<Button>(R.id.signupButton)
-        // 테스트용 계정 삭제 버튼 -> 마지막에 제거 필요
-        val deleteTestButton = findViewById<Button>(R.id.DeleteTestID)
 
         // 로그인 버튼 이벤트 리스너
         loginButton.setOnClickListener{
@@ -84,12 +82,6 @@ class LoginActivity : AppCompatActivity() {
                     }
                 }
             }
-        }
-
-        // 테스트용 계정 삭제 버튼 -> 마지막에 제거 필요
-        deleteTestButton.setOnClickListener {
-            dbHelper.deleteAllUsers()
-            Toast.makeText(this, "모든 사용자 삭제 완료", Toast.LENGTH_SHORT).show()
         }
 
     }
