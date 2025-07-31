@@ -38,17 +38,17 @@ class QuizFragment : Fragment() {
         quizId = requireArguments().getString("QUIZ_ID")
             ?: throw IllegalArgumentException("QUIZ_ID 필요")
 
-        // 2. quizId에 따라 Question 리스트 구성
         questions = when (quizId) {
-            // 도서관
-            "library_quiz" -> listOf(
+            "library_quiz_1" -> listOf(
                 Question(
                     text = "다음 사진 속 빈칸을 채우세요.",
                     imageRes = R.drawable.library_quiz_image_2,
                     options = null,
                     answer = "중앙간접등",
                     hint = "도서관 1층 멀티플렉스존 내부의 전등 스위치를 찾아보세요."
-                ),
+                )
+            )
+            "library_quiz_2" -> listOf(
                 Question(
                     text = "다음 중 도서관에서 노트북 사용이 불가능한 공간은?",
                     imageRes = R.drawable.library_quiz_image_1,
@@ -57,15 +57,16 @@ class QuizFragment : Fragment() {
                     hint = "도서관에서 사진 속 안내문을 찾아보세요."
                 )
             )
-            // 누리관
-            "nuri_hall_quiz" -> listOf(
+            "nuri_hall_quiz_1" -> listOf(
                 Question(
                     text = "음악감상실 왼쪽 첫 번째 줄의 의자 개수는?",
                     imageRes = null,
                     options = listOf("2개", "3개", "4개", "5개"),
                     answer = "3개",
                     hint = "2층 음악감상실에 방문해 보세요"
-                ),
+                )
+            )
+            "nuri_hall_quiz_2" -> listOf(
                 Question(
                     text = "구시아 앞에 있는 키오스크 개수는?",
                     imageRes = null,
@@ -74,8 +75,7 @@ class QuizFragment : Fragment() {
                     hint = "지하 1층 구시아에 방문해 보세요"
                 )
             )
-            // 50주년기념관
-            "anniversary_quiz" -> listOf(
+            "anniversary_quiz_1" -> listOf(
                 Question(
                     text = "학생 및 외부인은 교직원 식당을 이용할 수 없다.",
                     imageRes = null,
@@ -84,8 +84,7 @@ class QuizFragment : Fragment() {
                     hint = "1층 교직원 식당 입구의 안내문을 확인해 보세요"
                 )
             )
-            // 기독교 교육관
-            "christian_ed_quiz" -> listOf(
+            "christian_ed_quiz_1" -> listOf(
                 Question(
                     text = "커뮤니티 라운지 이용 시간은\n평일 __시부터 __시까지이다.",
                     imageRes = null,
@@ -94,7 +93,6 @@ class QuizFragment : Fragment() {
                     hint = "1층 커뮤니티 라운지 입구의 안내문을 확인해 보세요"
                 )
             )
-            // 기본: 빈 리스트
             else -> emptyList()
         }
     }

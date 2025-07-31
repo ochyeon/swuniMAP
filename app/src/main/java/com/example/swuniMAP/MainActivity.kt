@@ -5,38 +5,48 @@ import android.os.Bundle
 import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.kakao.vectormap.KakaoMap
+import com.kakao.vectormap.MapLifeCycleCallback
+import com.kakao.vectormap.MapView
+import com.kakao.vectormap.LatLng
+import com.kakao.vectormap.label.LabelOptions
+import com.kakao.vectormap.label.LabelStyle
+import com.kakao.vectormap.label.LabelStyles
+import com.kakao.vectormap.label.LabelTextBuilder
 import android.content.Intent
 import android.app.Activity
 import android.location.LocationManager
 import android.util.Log
 import androidx.activity.result.contract.ActivityResultContracts
+import com.kakao.vectormap.KakaoMapReadyCallback
+import com.kakao.vectormap.KakaoMapSdk
+import com.kakao.vectormap.camera.CameraUpdateFactory
+import com.kakao.vectormap.camera.CameraPosition
 
 // 런타임 권한 요청을 위한 import 추가
 import android.Manifest
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.naver.maps.geometry.LatLng
-import com.naver.maps.map.CameraUpdate
-import com.naver.maps.map.MapFragment
-import com.naver.maps.map.NaverMap
-import com.naver.maps.map.OnMapReadyCallback
-import com.naver.maps.map.overlay.Marker
-import com.naver.maps.map.overlay.OverlayImage
 
-
-class MainActivity : AppCompatActivity(), OnMapReadyCallback {
-    private lateinit var naverMap : NaverMap
+class MainActivity : AppCompatActivity() {
+    private lateinit var mapView : MapView
     private lateinit var quizProgressTextView: TextView
-    private lateinit var sharedPreferences: SharedPreferences
 
     private var completedQuizzes = 0
     private val totalQuizzes = 6
 
-    private var minZoomLevel: Double? = null
-    private val quizCompletionStatus = mutableMapOf<String, Boolean>()
-    private var buildingMarkers : MutableList<Marker> = mutableListOf()
+    private var kakaoMap:KakaoMap? = null
+    private var minZoomLevel: Float? = null
+
+    private val quizCompletionStatus = mutableMapOf(
+        "library_quiz_1" to false,
+        "library_quiz_2" to false,
+        "nuri_hall_quiz_1" to false,
+        "nuri_hall_quiz_2" to false,
+        "anniversary_quiz_1" to false,
+        "christian_ed_quiz_1" to false
+    )
 
     private val quizSizeMap = mapOf(
         "library_quiz"        to 2,
@@ -52,8 +62,6 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         "christian_ed_quiz" to listOf("christian_ed_quiz_1")
     )
 
-    private var userLocationMarker : Marker? = null
-
     // 위치 권한 요청을 위한 고유 코드 정의
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
 
@@ -64,38 +72,20 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             val data = result.data ?: return@registerForActivityResult
             val quizId = data.getStringExtra("QUIZ_ID") ?: return@registerForActivityResult
             val correctCount = data.getIntExtra("CORRECT_COUNT", 0)
-            val totalCount = quizSizeMap[quizId] ?: return@registerForActivityResult
 
-            // 모두 맞혔을 때 묶음 처리
-            if (correctCount == totalCount) {
-                val subQuizIds = when (quizId) {
-                    "nuri_hall_quiz" -> listOf("nuri_hall_quiz_1", "nuri_hall_quiz_2")
-                    "library_quiz" -> listOf("library_quiz_1", "library_quiz_2")
-                    "anniversary_quiz" -> listOf("anniversary_quiz_1")
-                    "christian_ed_quiz" -> listOf("christian_ed_quiz_1")
-                    else -> listOf(quizId) // 혹시 문제 단일 ID라면 그대로 처리
-                }
-
-                subQuizIds.forEach { id ->
-                    if (quizCompletionStatus[id] == false) {
-                        quizCompletionStatus[id] = true
-                        completedQuizzes++
-                    }
-                }
-
+            // 개별 퀴즈 단위로 처리
+            if (quizCompletionStatus[quizId] == false && correctCount > 0) {
+                quizCompletionStatus[quizId] = true
+                completedQuizzes++
                 updateQuizProgress()
                 saveQuizCompletionStatus()
 
-                Toast.makeText(
-                    this,
-                    "$quizId 미션 성공!",
-                    Toast.LENGTH_SHORT
-                ).show()
+                Toast.makeText(this, "$quizId 퀴즈 완료!", Toast.LENGTH_SHORT).show()
+            }
 
-                if(completedQuizzes >= totalQuizzes){
-                    startActivity(Intent(this, FinishActivity::class.java))
-                    finish()
-                }
+            if (completedQuizzes >= totalQuizzes) {
+                startActivity(Intent(this, FinishActivity::class.java))
+                finish()
             }
         }
 
@@ -104,56 +94,102 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        quizProgressTextView = findViewById(R.id.quizProgressTextView)
-        sharedPreferences = getSharedPreferences("QuizPrefs", MODE_PRIVATE)
+        KakaoMapSdk.init(this, BuildConfig.KAKAO_MAP_KEY)
 
-        val quizIds = listOf(
-            "anniversary_quiz_1",
-            "nuri_hall_quiz_1", "nuri_hall_quiz_2",
-            "library_quiz_1", "library_quiz_2",
-            "christian_ed_quiz_1"
-        )
-        quizIds.forEach{quizCompletionStatus[it] = false}
+        setContentView(R.layout.activity_main)
+
+        mapView = findViewById(R.id.map_view)
+
+        quizProgressTextView = findViewById(R.id.quizProgressTextView)
+
+
+        quizCompletionStatus["anniversary_quiz"] = false
+        quizCompletionStatus["nuri_hall_quiz"] = false
+        quizCompletionStatus["library_quiz"] = false
+        quizCompletionStatus["christian_ed_quiz"] = false
 
         loadQuizCompletionStatus()
         updateQuizProgress()
 
-        // 지도 초기화
-        var mapFragment = supportFragmentManager.findFragmentById(R.id.map_container) as MapFragment?
-        if (mapFragment == null) {
-            mapFragment = MapFragment.newInstance()
-            supportFragmentManager.beginTransaction()
-                .add(R.id.map_container, mapFragment)
-                .commit()
-        }
-        mapFragment?.getMapAsync(this)
-    }
+        mapView.start(object : MapLifeCycleCallback() {
 
-    override fun onMapReady(map: NaverMap) {
-        naverMap = map
-
-        // 1. 캠퍼스 전체를 보기 위한 좌표
-        val campusBounds = LatLng(37.6258, 127.0881) to LatLng(37.6294, 127.0936)
-        val cameraUpdate = CameraUpdate.fitBounds(com.naver.maps.geometry.LatLngBounds(campusBounds.first, campusBounds.second))
-        map.moveCamera(cameraUpdate)
-
-        // 초기 줌 레벨 저장 -> 지도의 최소 축소 배율 -> 더 축소하면 자동으로 배율 복원
-        minZoomLevel = map.cameraPosition.zoom
-
-        addBuildingMarkers()
-        showCurrentLocationMarker()
-
-        naverMap.addOnCameraIdleListener {
-            val zoom = naverMap.cameraPosition.zoom
-            minZoomLevel?.let{minZoom->
-                if (zoom < minZoom) {
-                    naverMap.moveCamera(CameraUpdate.zoomTo(minZoom))
-                }
+            override fun onMapDestroy() {
+                // 이 메서드는 비워두어도 됩니다.
             }
-        }
 
-        // 지도가 준비된 후 권한 확인 및 현재 위치 마커 표시를 시작합니다.
-        checkLocationPermission()
+            override fun onMapError(error: Exception) {
+                Toast.makeText(this@MainActivity, "지도 로딩 오류: ${error.message}", Toast.LENGTH_LONG).show()
+            }
+        }, object: KakaoMapReadyCallback(){
+            override fun onMapReady(map: KakaoMap) {
+                kakaoMap = map
+
+                // 1. 캠퍼스 영역 좌표들 (정문과 반대편)
+                val campusPoints = arrayOf(
+                    LatLng.from(37.6258, 127.0881),  // 남서쪽
+                    LatLng.from(37.6294, 127.0936)   // 북동쪽
+                )
+
+                // 2. 카메라 이동 (padding: 50px 정도 여유)
+                val cameraUpdate = CameraUpdateFactory.fitMapPoints(campusPoints, 50)
+                map.moveCamera(cameraUpdate)
+
+                // 초기 줌 레벨 저장 -> 지도의 최소 축소 배율 -> 더 축소하면 자동으로 배율 복원
+                minZoomLevel = map.cameraPosition?.zoomLevel?.toFloat()
+
+                Log.d("Map", "카메라 캠퍼스 전체로 이동 완료")
+
+                mapView.post {
+                    // 초기 아이콘 크기로 마커 표시
+                    addBuildingMarkers(map, calculateIconSize(map.cameraPosition?.zoomLevel?.toInt()?: 10))
+                }
+                // 초기 배율보다 작게 축소하려고 할 경우
+                map.setOnCameraMoveEndListener { map, cameraPosition, _ ->
+                    val zoom = cameraPosition?.zoomLevel ?: return@setOnCameraMoveEndListener
+
+                    minZoomLevel?.let { minZoom ->
+                        if (zoom < minZoom) {
+                            cameraPosition?.let { safeCameraPosition ->
+                                val limitedPosition = CameraPosition.from(
+                                    safeCameraPosition.position.latitude,
+                                    safeCameraPosition.position.longitude,
+                                    minZoom.toInt(),
+                                    safeCameraPosition.tiltAngle,
+                                    safeCameraPosition.rotationAngle,
+                                    0.0  // 마지막 인자 API 문서 확인 필요
+                                )
+
+                                map.moveCamera(CameraUpdateFactory.newCameraPosition(limitedPosition))
+                            }
+                            return@setOnCameraMoveEndListener
+                        }
+                    }
+                    val iconSize = calculateIconSize(zoom.toInt())
+                    updateMarkers(iconSize)
+                }
+                map.setOnLabelClickListener { _, _, label ->
+                    val tag = label.tag as? String ?: return@setOnLabelClickListener true
+                    if (tag.endsWith("_info")) {
+                        val buildingId = tag.substringBefore("_info")
+                        val intent = Intent(this@MainActivity, BuildingDetailActivity::class.java)
+                        intent.putExtra("BUILDING_ID", buildingId)
+                        startActivity(intent)
+                    } else if (tag.contains("_quiz")) {
+                        if (quizCompletionStatus[tag] == true) {
+                            Toast.makeText(this@MainActivity, "완료된 미션입니다.", Toast.LENGTH_SHORT).show()
+                            return@setOnLabelClickListener true
+                        }
+                        val intent = Intent(this@MainActivity, QuizActivity::class.java)
+                        intent.putExtra("QUIZ_ID", tag)
+                        quizResultLauncher.launch(intent)
+                    }
+                    true
+                }
+
+                // 지도가 준비된 후 권한 확인 및 현재 위치 마커 표시를 시작합니다.
+                checkLocationPermission()
+            }
+        })
     }
 
     // --- 런타임 권한 요청 및 처리 로직 추가 시작 ---
@@ -207,7 +243,7 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
             try{
                 val location = locationManager.getLastKnownLocation(it)
                 location?.let{
-                    val currentLatLng = LatLng(it.latitude, it.longitude)
+                    val currentLatLng = LatLng.from(it.latitude, it.longitude)
 
                     if(isInCampus(currentLatLng)){
                         showCurrentLocationMarkerOnMap(currentLatLng)
@@ -237,14 +273,19 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private fun showCurrentLocationMarkerOnMap(latLng: LatLng) {
         // 기존에 user_location 마커가 있다면 제거
-        userLocationMarker?.map = null
-
-        userLocationMarker = Marker().apply {
-            position = latLng
-            map = naverMap
-            icon = OverlayImage.fromResource(R.drawable.marker_current_location)
-            captionText = "현재 위치"
+        kakaoMap?.labelManager?.layer?.getLabel("user_location")?.run {
+            kakaoMap?.labelManager?.layer?.remove(this)
         }
+        kakaoMap?.labelManager?.layer?.addLabel(
+            LabelOptions.from(latLng)
+                .setTag("user_location")
+                .setStyles(
+                    LabelStyles.from(
+                        LabelStyle.from(R.drawable.marker_current_location)
+                    )
+                )
+                .setTexts(LabelTextBuilder().addTextLine("현재 위치", 0))
+        )
     }
 
     private fun isInCampus(latLng: LatLng): Boolean {
@@ -266,67 +307,97 @@ class MainActivity : AppCompatActivity(), OnMapReadyCallback {
     }
 
     private fun updateMarkers(iconSize: Int) {
-        buildingMarkers.forEach { it.map = null }
-        buildingMarkers.clear()
-
-        addBuildingMarkers()
+        val map = kakaoMap ?: return
+        map.labelManager?.layer?.removeAll() // 기존 마커 전체 제거
+        addBuildingMarkers(map, iconSize) // 새 아이콘 크기로 마커 다시 추가
+        showCurrentLocationMarkerOnMap(map.cameraPosition?.position ?: LatLng.from(0.0, 0.0)) // 현재 위치 마커 다시 추가 (임시 LatLng, 실제 위치로 업데이트 필요)
     }
 
-    private fun addBuildingMarkers() {
-        buildingMarkers.forEach { it.map = null }
-        buildingMarkers.clear()
+    private fun addBuildingMarkers(map: KakaoMap, iconSize: Int) {
+        val labelManager = kakaoMap?.labelManager
 
-        val buildings = listOf(
-            Triple("liberal_arts_info", com.naver.maps.geometry.LatLng(37.62834, 127.0926), R.drawable.marker_info),
-            Triple("first_science_info", com.naver.maps.geometry.LatLng(37.62926, 127.0896), R.drawable.marker_info),
-            Triple("second_science_info", com.naver.maps.geometry.LatLng(37.62942, 127.0905), R.drawable.marker_info),
-            Triple("art_hall_info", com.naver.maps.geometry.LatLng(37.62913, 127.0916), R.drawable.marker_info),
-            Triple("anniversary_quiz", com.naver.maps.geometry.LatLng(37.62640, 127.0930), R.drawable.marker_quiz),
-            Triple("nuri_hall_quiz", com.naver.maps.geometry.LatLng(37.62873, 127.0906), R.drawable.marker_quiz),
-            Triple("library_quiz", com.naver.maps.geometry.LatLng(37.62857, 127.0913), R.drawable.marker_quiz),
-            Triple("christian_ed_quiz", com.naver.maps.geometry.LatLng(37.62709, 127.0925), R.drawable.marker_quiz)
+        val infoMarkerStyle = LabelStyles.from(
+            LabelStyle.from(R.drawable.marker_info)
+                .setTextStyles(iconSize, Color.BLACK)
         )
-        buildings.forEach { (tag, position, iconRes) ->
-            val marker = Marker().apply {
-                this.position = position
-                this.map = naverMap
-                this.icon = OverlayImage.fromResource(iconRes)
-                this.tag = tag
-                // 필요하면 캡션(텍스트)도 설정 가능
-                // this.captionText = tag
-                setOnClickListener {
-                    val clickedTag = it.tag as? String
-                    clickedTag?.let { id ->
-                        if (id.contains("quiz")) {
-                            // 묶음 퀴즈라면 하위 문제 리스트 가져오기, 없으면 자기 자신만 리스트로
-                            val subQuizIds = quizGroupToSubIds[id] ?: listOf(id)
-                            // 모든 하위 퀴즈가 완료됐는지 검사
-                            val allCompleted = subQuizIds.all { quizCompletionStatus[it] == true }
 
-                            if (allCompleted) {
-                                Toast.makeText(this@MainActivity, "완료된 미션입니다.", Toast.LENGTH_SHORT).show()
-                                return@setOnClickListener true // 클릭 이벤트 소비, 이후 진행 차단
-                            }
+        val quizMarkerStyle = LabelStyles.from(
+            LabelStyle.from(R.drawable.marker_quiz)
+                .setTextStyles(iconSize, Color.BLACK)
+        )
 
-                            // 완료 안 된 경우에만 퀴즈 액티비티 실행
-                            val intent = Intent(this@MainActivity, QuizActivity::class.java)
-                            intent.putExtra("QUIZ_ID", id)
-                            quizResultLauncher.launch(intent)
-                        } else if (id.contains("info")) {
-                            val buildingId = id.removeSuffix("_info")
-                            val intent = Intent(this@MainActivity, BuildingDetailActivity::class.java)
-                            intent.putExtra("BUILDING_ID", buildingId)
-                            startActivity(intent)
-                        } else {
-                            Toast.makeText(this@MainActivity, "알 수 없는 마커입니다.", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    true
-                }
+        // 기존 마커 추가 코드에서 TextSize 대신 iconSize 사용
+        val liberalArtsLocation = LatLng.from(37.62834, 127.0926)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(liberalArtsLocation)
+                .setStyles(infoMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("인문사회관", 0))
+                .setTag("liberal_arts_info")
+        )
 
-            }
-            buildingMarkers.add(marker)
-        }
+        val firstScienceLocation = LatLng.from(37.62926, 127.0896)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(firstScienceLocation)
+                .setStyles(infoMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("제1 과학관", 0))
+                .setTag("first_science_info")
+        )
+        val secondScienceLocation = LatLng.from(37.62942, 127.0905)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(secondScienceLocation)
+                .setStyles(infoMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("제2 과학관", 0))
+                .setTag("second_science_info")
+        )
+        val artHallLocation = LatLng.from(37.62913, 127.0916)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(artHallLocation)
+                .setStyles(infoMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("조형예술관", 0))
+                .setTag("art_hall_info")
+        )
+        val anniversaryHallQuizLocation1 = LatLng.from(37.62640, 127.0930)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(anniversaryHallQuizLocation1)
+                .setStyles(quizMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("50주년 퀴즈 1", 0))
+                .setTag("anniversary_quiz_1")
+        )
+        val nuriHallQuizLocation1 = LatLng.from(37.62873, 127.0906)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(nuriHallQuizLocation1)
+                .setStyles(quizMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0))
+                .setTag("nuri_hall_quiz_1")
+        )
+        val nuriHallQuizLocation2 = LatLng.from(37.62876, 127.09065)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(nuriHallQuizLocation2)
+                .setStyles(quizMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("누리관 퀴즈 1", 0))
+                .setTag("nuri_hall_quiz_2")
+        )
+        val libraryQuizLocation1 = LatLng.from(37.62857, 127.0913)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(libraryQuizLocation1)
+                .setStyles(quizMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0))
+                .setTag("library_quiz_1")
+        )
+        val libraryQuizLocation2 = LatLng.from(37.62860, 127.09135)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(libraryQuizLocation2)
+                .setStyles(quizMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("도서관 퀴즈 1", 0))
+                .setTag("library_quiz_2")
+        )
+        val christianEdHallQuizLocation1 = LatLng.from(37.62709, 127.0925)
+        labelManager?.layer?.addLabel(
+            LabelOptions.from(christianEdHallQuizLocation1)
+                .setStyles(quizMarkerStyle)
+//                .setTexts(LabelTextBuilder().addTextLine("기독교 교육관 퀴즈 1", 0))
+                .setTag("christian_ed_quiz_1")
+        )
     }
 
     private fun updateQuizProgress() {

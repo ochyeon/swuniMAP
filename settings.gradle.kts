@@ -17,9 +17,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
 
-        // 네이버 지도 저장소
+        // 카카오 지도 저장소
         maven{
-            url = uri("https://repository.map.naver.com/archive/maven")
+            url = uri("https://devrepo.kakao.com/nexus/content/groups/public/")
         }
     }
 }

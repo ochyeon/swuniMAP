@@ -9,6 +9,9 @@ plugins {
 val properties = Properties().apply{
     load(FileInputStream(rootProject.file("local.properties")))
 }
+val kakaoMapKey = properties.getProperty("KAKAO_MAP_KEY")
+    ?: throw GradleException("KAKAO_MAP_KEY is missing in local.properties")
+
 
 android {
     namespace = "com.example.swuniMAP"
@@ -23,9 +26,12 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        buildConfigField("String", "CLIENT_ID",
-            "\"${properties.getProperty("CLIENT_ID")}\"")
-        manifestPlaceholders["CLIENT_ID"] = properties.getProperty("CLIENT_ID")
+        buildConfigField("String", "KAKAO_MAP_KEY", "\"$kakaoMapKey\"")
+
+        ndk {
+            abiFilters += setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
+        }
+        manifestPlaceholders["KAKAO_MAP_KEY"] = kakaoMapKey
     }
 
     buildFeatures{
@@ -61,5 +67,5 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
-    implementation("com.naver.maps:map-sdk:3.19.1")
+    implementation(libs.kakao.mapsdk)
 }
